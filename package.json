@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "python3 server.py 8088",
-    "build": "python3 scripts/build_data.py",
+    "build:data": "python3 scripts/build_data.py",
     "fetch:core": "python3 scripts/fetch_core.py"
   },
   "keywords": [
