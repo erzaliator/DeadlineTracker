@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deadline Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
+  <meta name="description" content="Academic conference and workshop deadline tracker for PhD research in Transfer Learning, Multilingual NLP, Discourse, Multimodal Benchmarks, Causality, Implicature, and QA/QG.">
+  
+  <!-- Modern Academic Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CRITICAL ARCHITECTURAL DIRECTIVE: Countdown timers must NEVER show seconds. Format is strictly 'DDd HHh MMm' (days, hours, minutes) across all views (cards, tables, modals, lists). Future code changes must NEVER revert this to display seconds. -->
+  <meta name="countdown-precision" content="minutes-only; no-seconds">
+
+  <!-- Cache-Control Directives -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <link rel="stylesheet" href="css/styles.css?v=core4602_217">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-top">
+        <div class="brand-group">
+          <div class="brand-icon">☕</div>
+          <div>
+            <h1 class="brand-title">Deadline Tracker</h1>
+            <p class="brand-subtitle">Transfer Learning • Multilingual NLP • Discourse & Pragmatics • Multimodal Benchmarks • Causality • Implicature • QA/QG</p>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="window.app.exportAllFilteredICS()" title="Export current view to iCalendar (.ics)">
+            📅 Export .ics Calendar
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.app.exportCache()" title="1-click download of all lists, custom venues & notes to JSON">
+            📥 Export Cache
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.app.triggerImportCache()" title="1-click import cache from a JSON file">
+            📤 Import Cache
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="window.app.openAddVenueModal('conference')">
+            + Add Custom CFP
+          </button>
+          <input type="file" id="cache-file-picker" accept=".json,application/json" style="display:none;" onchange="window.app.handleCacheFileImport(event)">
+        </div>
+      </div>
+
+      <!-- Quick Stats Banner (Clickable, Single Row of Text, One Large Number) -->
+      <div class="stats-banner">
+        <div class="stat-card" onclick="window.app.filterFromStat('all')" role="button" tabindex="0" title="Click to view all tracked venues">
+          <div class="stat-icon" style="color: #4f46e5;">🏛️</div>
+          <div class="stat-content-row">
+            <span class="stat-number" id="stat-total-venues">0</span>
+            <span class="stat-label">Tracked Venues</span>
+          </div>
+        </div>
+
+        <div class="stat-card" onclick="window.app.filterFromStat('upcoming')" role="button" tabindex="0" title="Click to filter upcoming deadlines">
+          <div class="stat-icon" style="color: #0891b2;">⏳</div>
+          <div class="stat-content-row">
+            <span class="stat-number" id="stat-upcoming-deadlines">0</span>
+            <span class="stat-label">Upcoming Deadlines</span>
+          </div>
+        </div>
+
+        <div class="stat-card" onclick="window.app.filterFromStat('urgent')" role="button" tabindex="0" title="Click to filter urgent deadlines (< 14 days)">
+          <div class="stat-icon" style="color: #e11d48;">🔥</div>
+          <div class="stat-content-row">
+            <span class="stat-number" id="stat-urgent-deadlines">0</span>
+            <span class="stat-label">Urgent (&lt;14 Days)</span>
+          </div>
+        </div>
+
+        <div class="stat-card" onclick="window.app.filterFromStat('lists')" role="button" tabindex="0" title="Click to view your WikiCFP lists">
+          <div class="stat-icon" style="color: #059669;">📚</div>
+          <div class="stat-content-row">
+            <span class="stat-number" id="stat-custom-lists">0</span>
+            <span class="stat-label">WikiCFP Lists</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs-wrapper" aria-label="Main Navigation">
+        <button class="nav-tab active" data-tab="tab-venues" id="tab-btn-venues">
+          📌 Tracked Venues
+        </button>
+        <button class="nav-tab" data-tab="tab-visualizer" id="tab-btn-visualizer">
+          📅 Calendar
+        </button>
+        <button class="nav-tab" data-tab="tab-lists" id="tab-btn-lists">
+          📚 My Lists (WikiCFP style)
+        </button>
+        <button class="nav-tab" data-tab="tab-openreview" id="tab-btn-openreview">
+          🌐 OpenReview Workshops
+        </button>
+        <button class="nav-tab" data-tab="tab-roadmap" id="tab-btn-roadmap">
+          🎓 PhD Strategy & ARR Guide
+        </button>
+      </nav>
+    </header>
+
+    <!-- Global Controls & Filter Bar -->
+    <section class="controls-bar" aria-label="Filters and Search Controls">
+      <div class="search-input-group">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="form-control" placeholder="Search conference, domain, keyword (e.g. NeurIPS, Causality, KDD, SemEval)...">
+      </div>
+
+      <div class="filters-group">
+        <!-- Deadline Range Filter -->
+        <select id="filter-deadline" class="select-control" aria-label="Filter by Deadline Range">
+          <option value="all">All Deadlines</option>
+          <option value="urgent">🔥 Urgent (&lt; 14 Days)</option>
+          <option value="upcoming-30">⏳ Next 30 Days</option>
+          <option value="upcoming-60">📅 Next 60 Days</option>
+          <option value="next-6m">📆 Next 6 Months</option>
+          <option value="past">🏁 Passed Deadlines</option>
+        </select>
+
+        <!-- CORE Rank Filter -->
+        <select id="filter-rank" class="select-control" aria-label="Filter by CORE Rank">
+          <option value="all">All Ranks (CORE & WS)</option>
+          <option value="A*">CORE A* (Flagship)</option>
+          <option value="A">CORE A (Excellent)</option>
+          <option value="B*">CORE B* (Very Good)</option>
+          <option value="B">CORE B (Specialized)</option>
+          <option value="C*">CORE C* (Recognized)</option>
+          <option value="C">CORE C (Standard)</option>
+          <option value="Workshop">Declared Workshops</option>
+        </select>
+
+        <!-- Research Domain Filter -->
+        <select id="filter-domain" class="select-control" aria-label="Filter by Research Domain">
+          <option value="all">All Research Domains</option>
+        </select>
+
+        <!-- Venue Type Filter -->
+        <select id="filter-type" class="select-control" aria-label="Filter by Venue Type">
+          <option value="all">All Types</option>
+          <option value="conference">Main Conferences</option>
+          <option value="workshop">Workshops</option>
+          <option value="rolling-review">Rolling Review (ARR)</option>
+        </select>
+
+        <!-- WikiCFP Custom List Filter -->
+        <select id="filter-list" class="select-control" aria-label="Filter by Custom List">
+          <option value="all">📁 List: All Tracked Venues</option>
+        </select>
+
+        <!-- Sort Option -->
+        <select id="filter-sort" class="select-control" aria-label="Sort Options">
+          <option value="deadline-asc">Deadline (Earliest First)</option>
+          <option value="deadline-desc">Deadline (Latest First)</option>
+          <option value="rank-desc">CORE Rank (A* down)</option>
+          <option value="h5-desc">Google Scholar h5-index</option>
+          <option value="name-asc">Acronym (A-Z)</option>
+        </select>
+
+        <span class="sort-filter-indicator">sort and filter ⇅</span>
+
+        <!-- Table vs Cards Toggle -->
+        <div class="view-toggle-group">
+          <button class="view-toggle-btn active" data-view="table" title="Table View">☰ Table</button>
+          <button class="view-toggle-btn" data-view="cards" title="Countdown Cards View">▦ Cards</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Tab Content Panes -->
+    <main>
+      <!-- TAB 1: Tracked Venues (Default) -->
+      <section class="tab-pane active" id="tab-venues">
+        <div id="venues-container">
+          <!-- Dynamic Content rendered by app.js -->
+        </div>
+      </section>
+
+      <!-- TAB 2: Calendar -->
+      <section class="tab-pane" id="tab-visualizer">
+        <div class="viz-subtabs-bar">
+          <button class="viz-subtab active" data-viz="yearly">
+            🗓️ Yearly Calendar Grid
+          </button>
+          <button class="viz-subtab" data-viz="calendar">
+            📅 Monthly Calendar Grid
+          </button>
+          <button class="viz-subtab" data-viz="gantt">
+            📊 Horizontal Gantt Timeline
+          </button>
+          <button class="viz-subtab" data-viz="cards">
+            ⏱️ Urgency Countdown Cards
+          </button>
+          <button class="viz-subtab" data-viz="matrix">
+            📈 Domain & Rank Strategy Matrix
+          </button>
+        </div>
+
+        <div id="visualizer-content">
+          <!-- Dynamic Visualizer rendered by visualizer.js -->
+        </div>
+      </section>
+
+      <!-- TAB 3: WikiCFP Lists -->
+      <section class="tab-pane" id="tab-lists">
+        <div id="lists-container">
+          <!-- Dynamic WikiCFP Lists rendered by app.js -->
+        </div>
+      </section>
+
+      <!-- TAB 4: OpenReview Workshops -->
+      <section class="tab-pane" id="tab-openreview">
+        <div id="openreview-container">
+          <!-- Declared OpenReview Workshops rendered by app.js -->
+        </div>
+      </section>
+
+      <!-- TAB 5: PhD Roadmap & ARR Guide -->
+      <section class="tab-pane" id="tab-roadmap">
+        <div id="roadmap-container">
+          <!-- PhD Strategy rendered by app.js -->
+        </div>
+      </section>
+    </main>
+    
+    <!-- Footer Notes -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <p class="footer-main">
+          Made at <a href="https://www.iiit.ac.in/" target="_blank" rel="noopener">IIIT-H</a> &lt;<a href="https://www.iiit.ac.in/" target="_blank" rel="noopener" class="footer-link-sub">https://www.iiit.ac.in/</a>&gt;
+        </p>
+        <p class="footer-sources">
+          <span class="footer-sources-label">Data sourced from:</span>
+          <span class="footer-source-item">CORE Rankings (CORE2026)</span> •
+          <span class="footer-source-item">ConferenceRanks.com</span> •
+          <span class="footer-source-item">WikiCFP</span> •
+          <span class="footer-source-item">OpenReview API</span> •
+          <span class="footer-source-item">ACL Rolling Review (ARR)</span> •
+          <span class="footer-source-item">Google Scholar Metrics (h5-index)</span> •
+          <span class="footer-source-item">DBLP</span> •
+          <span class="footer-source-item">IEEE Xplore</span> •
+          <span class="footer-source-item">Official Conference CFPs</span>
+        </p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==========================================================================
+       MODALS
+       ========================================================================== -->
+
+  <!-- Modal 1: Venue Detail Modal -->
+  <div class="modal-overlay" id="venue-detail-modal" onclick="if(event.target===this) window.app.closeVenueModal()">
+    <div class="modal-window">
+      <button class="modal-close-btn" onclick="window.app.closeVenueModal()">&times;</button>
+      
+      <div class="modal-header">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div>
+            <div id="modal-venue-rank" style="margin-bottom:6px;"></div>
+            <h3 id="modal-venue-title" style="font-family:var(--font-display); font-size:1.3rem;"></h3>
+          </div>
+          <div id="modal-venue-countdown"></div>
+        </div>
+      </div>
+
+      <div id="modal-venue-body">
+        <!-- Dynamic Modal Body populated by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Assign Venue to WikiCFP List Modal -->
+  <div class="modal-overlay" id="assign-list-modal" onclick="if(event.target===this) window.app.closeAssignListModal()">
+    <div class="modal-window" style="max-width: 480px;">
+      <button class="modal-close-btn" onclick="window.app.closeAssignListModal()">&times;</button>
+      
+      <div class="modal-header">
+        <h4>Add to WikiCFP List</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Select the list(s) to track <strong id="assign-venue-name" style="color:var(--text-primary);"></strong>:</p>
+      </div>
+
+      <div id="assign-lists-container" style="display:flex; flex-direction:column; gap:8px; margin: 14px 0;">
+        <!-- Checkboxes generated dynamically -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; margin-top:18px;">
+        <button class="btn btn-secondary btn-sm" onclick="window.app.closeAssignListModal()">Done</button>
+        <button class="btn btn-outline btn-sm" onclick="window.app.openCreateListModal()">+ Create New List</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Create WikiCFP List Modal -->
+  <div class="modal-overlay" id="create-list-modal" onclick="if(event.target===this) window.app.closeCreateListModal()">
+    <div class="modal-window" style="max-width: 480px;">
+      <button class="modal-close-btn" onclick="window.app.closeCreateListModal()">&times;</button>
+      
+      <div class="modal-header">
+        <h4>Create New WikiCFP List</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Create a custom group of conferences for your PhD timeline.</p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin: 14px 0;">
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">List Name *</label>
+          <input type="text" id="new-list-name" class="form-control" placeholder="e.g. 2027 Multimodal & Causal Benchmarks">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Description (Optional)</label>
+          <textarea id="new-list-desc" class="form-control" rows="2" placeholder="e.g. Priority conferences for my second dissertation chapter"></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="window.app.closeCreateListModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="window.app.submitCreateList()">Save List</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Add Custom CFP / Conference / Workshop Modal with URL Autofill -->
+  <div class="modal-overlay" id="add-venue-modal" onclick="if(event.target===this) window.app.closeAddVenueModal()">
+    <div class="modal-window" style="max-width: 620px;">
+      <button class="modal-close-btn" onclick="window.app.closeAddVenueModal()">&times;</button>
+      
+      <div class="modal-header">
+        <h4>Add Custom Conference or Workshop CFP</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted);">Paste a CFP website URL to autofill details, or enter them manually.</p>
+      </div>
+
+      <!-- Quick URL Autofill Box -->
+      <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px;">
+        <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-primary);">🔗 Quick Autofill from CFP / OpenReview Website URL</label>
+        <div style="display:flex; gap: 8px;">
+          <input type="url" id="autofill-url-input" class="form-control" placeholder="Paste CFP URL (e.g. https://semeval.github.io/ or OpenReview link)...">
+          <button class="btn btn-secondary btn-sm" type="button" onclick="window.app.autofillFromURL()">Fetch & Extract</button>
+        </div>
+        <div id="autofill-status" style="font-size:0.74rem; margin-top:4px;"></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Acronym *</label>
+          <input type="text" id="new-venue-acronym" class="form-control" placeholder="e.g. SemEval 2027">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Full Name *</label>
+          <input type="text" id="new-venue-name" class="form-control" placeholder="International Workshop on Semantic Evaluation">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Venue Type</label>
+          <select id="new-venue-type" class="form-control">
+            <option value="workshop" selected>Workshop</option>
+            <option value="conference">Main Conference</option>
+            <option value="rolling-review">Rolling Review (ARR)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Rank</label>
+          <select id="new-venue-rank" class="form-control">
+            <option value="A*">CORE A* (Flagship)</option>
+            <option value="A">CORE A (Excellent)</option>
+            <option value="B">CORE B (Specialized)</option>
+            <option value="Workshop" selected>Workshop</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Paper Deadline (AoE UTC-12)</label>
+          <input type="date" id="new-venue-deadline" class="form-control">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Notification Date</label>
+          <input type="date" id="new-venue-notif" class="form-control">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Location</label>
+          <input type="text" id="new-venue-location" class="form-control" placeholder="City, Country">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Submission Portal</label>
+          <input type="text" id="new-venue-portal" class="form-control" placeholder="OpenReview, Softconf...">
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Official Website / OpenReview URL</label>
+        <input type="url" id="new-venue-website" class="form-control" placeholder="https://...">
+      </div>
+
+      <div style="margin-bottom:10px;">
+        <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Research Domains</label>
+        <div id="new-venue-domains" style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size:0.78rem;">
+          <label><input type="checkbox" value="transfer-learning"> Transfer Learning</label>
+          <label><input type="checkbox" value="multilingual"> Multilingual NLP</label>
+          <label><input type="checkbox" value="discourse"> Discourse & Pragmatics</label>
+          <label><input type="checkbox" value="implicature"> Implicature</label>
+          <label><input type="checkbox" value="multimodal"> Multimodal Benchmarks</label>
+          <label><input type="checkbox" value="causality"> Causal Understanding</label>
+          <label><input type="checkbox" value="qa-qg"> QA & Question Generation</label>
+          <label><input type="checkbox" value="ir-search"> IR & Web</label>
+          <label><input type="checkbox" value="general-ai-ml"> General AI/ML</label>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">Notes & Focus</label>
+        <textarea id="new-venue-notes" class="form-control" rows="2" placeholder="Special tracks, workshop topic focus..."></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="window.app.closeAddVenueModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="window.app.submitAddVenue()">Add to Tracker</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Local Cache Backup / Restore Modal -->
+  <div class="modal-overlay" id="backup-modal" onclick="if(event.target===this) window.app.closeBackupModal()">
+    <div class="modal-window" style="max-width: 560px;">
+      <button class="modal-close-btn" onclick="window.app.closeBackupModal()">&times;</button>
+      
+      <div class="modal-header">
+        <h4>💾 Browser Cache Backup & Restore</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted);">All custom WikiCFP lists, notes, and custom CFPs are saved in your browser's local cache.</p>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:4px; color:var(--text-secondary);">JSON Data Payload</label>
+        <textarea id="backup-json-textarea" class="form-control" rows="8" style="font-family:var(--font-mono); font-size:0.75rem;"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="window.app.downloadBackupFile()">
+            📥 Download JSON File
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="window.app.restoreBackupData()">
+            📤 Restore from Textarea
+          </button>
+        </div>
+        <button class="btn btn-outline-danger btn-sm" onclick="if(confirm('Reset all local storage to defaults?')) { window.storageManager.resetAll(); location.reload(); }">
+          Reset Cache
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Share Conference List Modal (Serverless) -->
+  <div class="modal-overlay" id="share-modal" onclick="if(event.target===this) window.app.closeShareModal()">
+    <div class="modal-window" style="max-width: 600px;">
+      <button class="modal-close-btn" onclick="window.app.closeShareModal()">&times;</button>
+      
+      <div class="modal-header">
+        <h4 id="share-modal-title" style="display:flex; align-items:center; gap:8px;">🔗 Share Conference List</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
+          ⚡ <strong>Serverless & Private:</strong> The entire list payload is encoded into the URL fragment. No database, server, or accounts needed!
+        </p>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:6px; color:var(--text-secondary);">
+          Shareable Link (Send to lab mates or collaborators)
+        </label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="share-link-input" class="form-control" readonly style="font-family:var(--font-mono); font-size:0.75rem; background:#f8fafc;" onclick="this.select()">
+          <button class="btn btn-primary btn-sm" onclick="window.app.copyShareLink()" id="btn-copy-share-link" style="white-space:nowrap; padding: 0 16px;">
+            📋 Copy Link
+          </button>
+        </div>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:5px;">
+          When someone opens this link, the app will automatically prompt them to save this list into their browser tracker.
+        </p>
+      </div>
+
+      <div style="margin-bottom: 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <strong style="font-size:0.82rem; color:var(--text-primary);">Included Venues & Deadlines</strong>
+          <span class="badge" id="share-modal-count-badge">0 Venues</span>
+        </div>
+        <div id="share-modal-venues-preview" style="max-height: 140px; overflow-y: auto; font-size:0.76rem; display:flex; flex-direction:column; gap:4px;">
+          <!-- Venues preview pills -->
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--border-color); padding-top: 14px;">
+        <label style="display:block; font-size:0.78rem; font-weight:600; margin-bottom:8px; color:var(--text-secondary);">
+          Alternative Sharing Formats:
+        </label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="window.app.copyListMarkdown()" title="Copy formatted Markdown table for Notion, Overleaf, or GitHub">
+            📝 Copy Markdown Table
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.app.downloadListJSON()" title="Download as .json file to share via file">
+            💾 Download List JSON
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.app.exportCurrentShareICS()" title="Export list to iCalendar (.ics)">
+            📅 Export .ics Calendar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 7: Incoming Shared List Received Modal -->
+  <div class="modal-overlay" id="incoming-share-modal" onclick="if(event.target===this) window.app.closeIncomingShareModal()">
+    <div class="modal-window" style="max-width: 580px;">
+      <button class="modal-close-btn" onclick="window.app.closeIncomingShareModal()">&times;</button>
+      
+      <div class="modal-header">
+        <h4 style="display:flex; align-items:center; gap:8px;">📥 Shared Conference List Received!</h4>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
+          A collaborator shared this curated conference list with you via a serverless link.
+        </p>
+      </div>
+
+      <div style="margin-bottom: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 14px;">
+        <h4 id="incoming-list-name" style="margin: 0 0 4px 0; color:#166534; font-size:1.05rem;">-</h4>
+        <p id="incoming-list-desc" style="margin: 0; color:#15803d; font-size:0.8rem;">-</p>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <strong style="font-size:0.82rem; color:var(--text-primary);">Included Venues & Deadlines:</strong>
+          <span class="badge" id="incoming-list-count">0 Venues</span>
+        </div>
+        <div id="incoming-venues-list" style="max-height: 180px; overflow-y: auto; display:flex; flex-direction:column; gap:6px; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:8px; background:#f8fafc;">
+          <!-- Items rendered here -->
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="window.app.closeIncomingShareModal()">
+          Dismiss
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="window.app.confirmSaveSharedList()">
+          💾 Save to My Lists & View
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Floating Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js?v=core4602_217"></script>
+  <script src="js/storage.js?v=core4602_217"></script>
+  <script src="js/visualizer.js?v=core4602_217"></script>
+  <script src="js/app.js?v=core4602_217"></script>
+
+</body>
+</html>
