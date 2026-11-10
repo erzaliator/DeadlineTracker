@@ -16,6 +16,15 @@ import sys
 import urllib.request
 import urllib.error
 
+# Load comprehensive C-venue enrichment catalog
+try:
+    from c_venues_data import C_VENUE_ENRICHMENT
+except ImportError:
+    try:
+        from scripts.c_venues_data import C_VENUE_ENRICHMENT
+    except ImportError:
+        C_VENUE_ENRICHMENT = {}
+
 CORE_BASE_URL = "https://portal.core.edu.au/conf-ranks/"
 
 DOMAIN_KEYWORDS = {
@@ -470,7 +479,12 @@ def parse_core_page(html):
         slug_id = f"core-{clean_acronym}"
         
         # Check if known milestone enrichment exists
-        enrich = CORE_VENUE_ENRICHMENT.get(acronym, {})
+        enrich = CORE_VENUE_ENRICHMENT.get(acronym)
+        if not enrich:
+            enrich = C_VENUE_ENRICHMENT.get(slug_id)
+        if not enrich:
+            enrich = C_VENUE_ENRICHMENT.get(acronym)
+        enrich = enrich or {}
         display_acronym = enrich.get("acronym", f"{acronym} 2026/2027")
         display_domains = enrich.get("domains", domains)
         
@@ -511,12 +525,60 @@ def parse_core_page(html):
         
     return parsed, total_count, len(rows)
 
+def enrich_existing_core_data(filepath="data/core_4602_nlp.json"):
+    """Re-enriches the existing harvested CORE catalog with the latest milestone dates and venues."""
+    if not os.path.exists(filepath):
+        print(f"Warning: {filepath} not found for enrichment.", file=sys.stderr)
+        return []
+    with open(filepath, "r", encoding="utf-8") as f:
+        venues = json.load(f)
+    
+    enriched = []
+    for v in venues:
+        slug_id = v.get("id", "")
+        clean_acro = slug_id.replace("core-", "").upper()
+        acronym_raw = v.get("acronym", "").split()[0]
+        
+        enrich = CORE_VENUE_ENRICHMENT.get(acronym_raw)
+        if not enrich:
+            enrich = C_VENUE_ENRICHMENT.get(slug_id)
+        if not enrich:
+            enrich = C_VENUE_ENRICHMENT.get(acronym_raw)
+        if not enrich:
+            enrich = C_VENUE_ENRICHMENT.get(clean_acro)
+        
+        if enrich:
+            display_acronym = enrich.get("acronym", v.get("acronym"))
+            v["acronym"] = display_acronym
+            v["edition"] = enrich.get("edition", v.get("edition", "2026/2027"))
+            v["domains"] = enrich.get("domains", v.get("domains"))
+            v["tags"] = enrich.get("tags", v.get("tags"))
+            v["abstractDeadline"] = enrich.get("abstractDeadline", v.get("abstractDeadline"))
+            v["deadline"] = enrich.get("deadline", v.get("deadline"))
+            v["reviewsReleased"] = enrich.get("reviewsReleased", v.get("reviewsReleased"))
+            v["notification"] = enrich.get("notification", v.get("notification"))
+            v["cameraReady"] = enrich.get("cameraReady", v.get("cameraReady"))
+            v["conferenceDates"] = enrich.get("conferenceDates", v.get("conferenceDates"))
+            v["location"] = enrich.get("location", v.get("location"))
+            v["portal"] = enrich.get("portal", v.get("portal"))
+            v["portalUrl"] = enrich.get("portalUrl", v.get("portalUrl"))
+            v["website"] = enrich.get("website", v.get("website"))
+            v["notes"] = enrich.get("notes", v.get("notes"))
+            if "h5Index" in enrich:
+                v.setdefault("otherRanks", {})["h5Index"] = enrich["h5Index"]
+            if "acceptanceRate" in enrich:
+                v.setdefault("otherRanks", {})["acceptanceRate"] = enrich["acceptanceRate"]
+            if "ccf" in enrich:
+                v.setdefault("otherRanks", {})["ccf"] = enrich["ccf"]
+        enriched.append(v)
+    return enriched
+
 def harvest_all_core_4602():
     print("[1/4] Connecting to ICORE 2026 Portal for FoR 4602 (NLP)...")
     first_page_html = fetch_core_page(1)
     if not first_page_html:
-        print("Failed to reach CORE portal.", file=sys.stderr)
-        return []
+        print("Notice: Unable to reach live CORE portal. Re-enriching existing catalog from data/core_4602_nlp.json...", file=sys.stderr)
+        return enrich_existing_core_data()
     
     first_batch, total_count, count_page1 = parse_core_page(first_page_html)
     all_conferences = list(first_batch)
@@ -537,9 +599,14 @@ def main():
     parser = argparse.ArgumentParser(description="Harvest CORE 2026 conferences for Field of Research 4602 (NLP).")
     parser.add_argument("--output", default="data/core_4602_nlp.json", help="Path to output JSON")
     parser.add_argument("--merge", action="store_true", help="Merge directly into data/conferences.json")
+    parser.add_argument("--enrich", action="store_true", help="Enrich existing local file without web scraping")
     args = parser.parse_args()
     
-    harvested = harvest_all_core_4602()
+    if args.enrich:
+        print(f"Re-enriching {args.output} from milestone dictionaries...")
+        harvested = enrich_existing_core_data(args.output)
+    else:
+        harvested = harvest_all_core_4602()
     
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:

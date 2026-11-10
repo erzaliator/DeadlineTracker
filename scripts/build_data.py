@@ -1383,6 +1383,230 @@ non_core_seeds = [
     "portalUrl": "https://causal-ml-workshop.github.io",
     "website": "https://causal-ml-workshop.github.io",
     "notes": "High prestige ML workshop focused on causality for invariant representations and out-of-distribution transfer."
+  },
+  {
+    "id": "icon-2026",
+    "acronym": "ICON 2026",
+    "name": "International Conference on Natural Language Processing (ICON)",
+    "type": "conference",
+    "edition": "2026",
+    "coreRank": "C*",
+    "otherRanks": {
+      "ccf": "C",
+      "h5Index": 22,
+      "acceptanceRate": "28.0%",
+      "anthology": "https://aclanthology.org/venues/icon/"
+    },
+    "domains": [
+      "general-nlp",
+      "multilingual",
+      "discourse",
+      "qa-qg",
+      "transfer-learning"
+    ],
+    "tags": [
+      "ICON",
+      "NLP",
+      "Multilingual",
+      "Indian Languages",
+      "ACL Anthology",
+      "Low-Resource"
+    ],
+    "abstractDeadline": "2026-08-25T23:59:59-12:00",
+    "deadline": "2026-09-04T23:59:59-12:00",
+    "reviewsReleased": "2026-10-18T23:59:59-12:00",
+    "notification": "2026-10-28T23:59:59-12:00",
+    "cameraReady": "2026-11-15T23:59:59-12:00",
+    "conferenceDates": "2026-12-17 to 2026-12-20",
+    "location": "Gauhati / Hyderabad, India",
+    "timezone": "AoE UTC-12",
+    "portal": "Microsoft CMT",
+    "portalUrl": "https://cmt3.research.microsoft.com",
+    "website": "http://ltrc.iiit.ac.in/icon2026",
+    "notes": "Premier annual NLP conference organized by the NLP Association of India (NLPAI), hosted with premier institutions (IIIT-H) and published in the ACL Anthology. Core venue for South Asian multilingual NLP and discourse."
+  },
+  {
+    "id": "adma-2026",
+    "acronym": "ADMA 2026",
+    "name": "Advanced Data Mining and Applications",
+    "type": "conference",
+    "edition": "2026",
+    "coreRank": "C",
+    "otherRanks": {
+      "ccf": "C",
+      "h5Index": 24,
+      "acceptanceRate": "27.5%"
+    },
+    "domains": [
+      "ir-search",
+      "graphs",
+      "general-nlp"
+    ],
+    "tags": [
+      "ADMA",
+      "Data Mining",
+      "Knowledge Discovery",
+      "Graph Mining"
+    ],
+    "abstractDeadline": "2026-06-18T23:59:59-12:00",
+    "deadline": "2026-06-26T23:59:59-12:00",
+    "reviewsReleased": "2026-08-10T23:59:59-12:00",
+    "notification": "2026-08-22T23:59:59-12:00",
+    "cameraReady": "2026-09-12T23:59:59-12:00",
+    "conferenceDates": "2026-11-20 to 2026-11-22",
+    "location": "Hong Kong, China",
+    "timezone": "AoE UTC-12",
+    "portal": "EasyChair",
+    "portalUrl": "https://easychair.org",
+    "website": "https://adma2026.org",
+    "notes": "Leading Asian conference on advanced data mining, graph mining, knowledge extraction, and NLP applications."
+  },
+  {
+    "id": "doceng-2026",
+    "acronym": "DocEng 2026",
+    "name": "ACM Symposium on Document Engineering",
+    "type": "conference",
+    "edition": "2026",
+    "coreRank": "C",
+    "otherRanks": {
+      "ccf": "C",
+      "h5Index": 21,
+      "acceptanceRate": "29.0%"
+    },
+    "domains": [
+      "general-nlp",
+      "multimodal",
+      "ir-search"
+    ],
+    "tags": [
+      "DocEng",
+      "Document Engineering",
+      "Information Extraction",
+      "Layout Analysis"
+    ],
+    "abstractDeadline": "2026-04-28T23:59:59-12:00",
+    "deadline": "2026-05-05T23:59:59-12:00",
+    "reviewsReleased": "2026-06-15T23:59:59-12:00",
+    "notification": "2026-06-25T23:59:59-12:00",
+    "cameraReady": "2026-07-20T23:59:59-12:00",
+    "conferenceDates": "2026-09-01 to 2026-09-04",
+    "location": "Fribourg, Switzerland",
+    "timezone": "AoE UTC-12",
+    "portal": "ConfTool",
+    "portalUrl": "https://www.conftool.com",
+    "website": "https://doceng.org/doceng2026",
+    "notes": "Premier ACM venue for document representation, parsing, multimodal document intelligence, and text analysis."
+  },
+  {
+    "id": "icann-2026",
+    "acronym": "ICANN 2026",
+    "name": "International Conference on Artificial Neural Networks",
+    "type": "conference",
+    "edition": "2026",
+    "coreRank": "C",
+    "otherRanks": {
+      "ccf": "C",
+      "h5Index": 26,
+      "acceptanceRate": "31.0%"
+    },
+    "domains": [
+      "representation-learning",
+      "general-ai-ml",
+      "general-nlp"
+    ],
+    "tags": [
+      "ICANN",
+      "Neural Networks",
+      "Deep Learning",
+      "Representation Learning"
+    ],
+    "abstractDeadline": "2026-03-22T23:59:59-12:00",
+    "deadline": "2026-03-30T23:59:59-12:00",
+    "reviewsReleased": "2026-05-15T23:59:59-12:00",
+    "notification": "2026-05-30T23:59:59-12:00",
+    "cameraReady": "2026-06-25T23:59:59-12:00",
+    "conferenceDates": "2026-09-15 to 2026-09-18",
+    "location": "Padua, Italy",
+    "timezone": "AoE UTC-12",
+    "portal": "EasyChair",
+    "portalUrl": "https://easychair.org",
+    "website": "https://e-nns.org/icann2026",
+    "notes": "Flagship conference of the European Neural Network Society (ENNS), addressing foundational neural architectures and representations."
+  },
+  {
+    "id": "ccl-2026",
+    "acronym": "CCL 2026",
+    "name": "China National Conference on Computational Linguistics",
+    "type": "conference",
+    "edition": "2026",
+    "coreRank": "C*",
+    "otherRanks": {
+      "ccf": "C",
+      "h5Index": 25,
+      "acceptanceRate": "28.0%",
+      "anthology": "https://aclanthology.org/venues/ccl/"
+    },
+    "domains": [
+      "general-nlp",
+      "multilingual",
+      "discourse",
+      "qa-qg"
+    ],
+    "tags": [
+      "CCL",
+      "CIPS",
+      "Chinese NLP",
+      "Computational Linguistics",
+      "ACL Anthology"
+    ],
+    "abstractDeadline": "2026-06-08T23:59:59-12:00",
+    "deadline": "2026-06-15T23:59:59-12:00",
+    "reviewsReleased": "2026-07-25T23:59:59-12:00",
+    "notification": "2026-08-08T23:59:59-12:00",
+    "cameraReady": "2026-08-25T23:59:59-12:00",
+    "conferenceDates": "2026-10-23 to 2026-10-25",
+    "location": "Yichang, China",
+    "timezone": "AoE UTC-12",
+    "portal": "Softconf",
+    "portalUrl": "https://softconf.com",
+    "website": "http://cips-cl.org/ccl2026",
+    "notes": "Flagship annual conference of the Chinese Information Processing Society (CIPS), published in ACL Anthology and Springer LNCS."
+  },
+  {
+    "id": "ccks-2026",
+    "acronym": "CCKS 2026",
+    "name": "China Conference on Knowledge Graph and Semantic Computing",
+    "type": "conference",
+    "edition": "2026",
+    "coreRank": "C",
+    "otherRanks": {
+      "ccf": "C",
+      "h5Index": 23,
+      "acceptanceRate": "30.0%"
+    },
+    "domains": [
+      "graphs",
+      "qa-qg",
+      "general-nlp"
+    ],
+    "tags": [
+      "CCKS",
+      "Knowledge Graph",
+      "Semantic Computing",
+      "KGQA"
+    ],
+    "abstractDeadline": "2026-05-31T23:59:59-12:00",
+    "deadline": "2026-06-08T23:59:59-12:00",
+    "reviewsReleased": "2026-07-15T23:59:59-12:00",
+    "notification": "2026-07-28T23:59:59-12:00",
+    "cameraReady": "2026-08-18T23:59:59-12:00",
+    "conferenceDates": "2026-09-18 to 2026-09-20",
+    "location": "Xi'an, China",
+    "timezone": "AoE UTC-12",
+    "portal": "EasyChair",
+    "portalUrl": "https://easychair.org",
+    "website": "https://sigkg.cn/ccks2026",
+    "notes": "Premier national conference on knowledge graphs, ontology engineering, and semantic question answering."
   }
 ]
 
